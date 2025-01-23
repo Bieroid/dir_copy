@@ -10,7 +10,7 @@ import (
 var buffer = make([]byte, 512*1024)
 
 const (
-	ErrInvalidInput    = "некорректный ввод"
+	ErrInvalidInput    = "некорректный ввод "
 	ErrNotADirectory   = "аргумент не является существующей директорией"
 	ErrCreateDir       = "ошибка при создании директории"
 	ErrReadDir         = "ошибка при чтении каталога"
