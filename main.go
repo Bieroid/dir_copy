@@ -21,20 +21,20 @@ const (
 )
 
 func main() {
-	workDirs, err := GetWorkDirs()
+	workDirs, err := getWorkDirs()
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	err = CopyDir(workDirs[0], workDirs[1])
+	err = copyDir(workDirs[0], workDirs[1])
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 }
 
-func GetWorkDirs() (workDirs []string, err error) {
+func getWorkDirs() (workDirs []string, err error) {
 	if len(os.Args) != 3 {
 		err = errors.New(ErrInvalidInput)
 		return
@@ -45,7 +45,7 @@ func GetWorkDirs() (workDirs []string, err error) {
 	return
 }
 
-func CopyDir(source string, dest string) (err error) {
+func copyDir(source string, dest string) (err error) {
 	info, err := os.Stat(source)
     if err != nil || !info.IsDir() {
         return errors.New(ErrNotADirectory)
@@ -66,12 +66,12 @@ func CopyDir(source string, dest string) (err error) {
         dstPath := dest + "/" + entry.Name()
 
         if entry.IsDir() {
-            err := CopyDir(srcPath, dstPath)
+            err := copyDir(srcPath, dstPath)
 			if err != nil {
                 return err
             }
         } else {
-			err := CopyFiles(srcPath, dstPath)
+			err := copyFiles(srcPath, dstPath)
 			if err != nil {
 				return err
 			}
@@ -80,7 +80,7 @@ func CopyDir(source string, dest string) (err error) {
 	return
 }
 
-func CopyFiles(filePathSrc string, filePathDst string) (err error) {
+func copyFiles(filePathSrc string, filePathDst string) (err error) {
 	srcFile, err := os.Open(filePathSrc)
 	if err != nil {
 		return errors.New(ErrOpenFile)
