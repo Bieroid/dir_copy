@@ -9,4 +9,4 @@
 После установки Go, клонируйте репозиторий:
 
 ```bash
-git clone https://github.com/Bieroid/file_distrubutor.git
+git clone https://github.com/Bieroid/dir_copy.git
