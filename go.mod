@@ -1,3 +1,3 @@
-module lin_copy_realisation
+module linux_copy_realisation
 
 go 1.23.4
