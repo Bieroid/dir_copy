@@ -1,24 +1,30 @@
 package main
 
 import (
-	"fmt"
-	"os"
 	"errors"
+	"fmt"
 	"io"
+	"os"
 )
 
 var buffer = make([]byte, 512*1024)
 
 const (
-	ErrInvalidInput    = "некорректный ввод"
-	ErrNotADirectory   = "аргумент не является существующей директорией"
-	ErrCreateDir       = "ошибка при создании директории"
-	ErrReadDir         = "ошибка при чтении каталога"
-	ErrOpenFile        = "невозможно открыть файл"
-    ErrCreateFile      = "невозможно создать файл"
-    ErrReadFile        = "ошибка при чтении файла"
-    ErrWriteFile       = "ошибка при записи файла"
+	ErrInvalidInput = "некорректный ввод"
+	ErrCreateDir    = "ошибка при создании директории"
+	ErrReadDir      = "ошибка при чтении каталога"
+	ErrOpenFile     = "невозможно открыть файл"
+	ErrCreateFile   = "невозможно создать файл"
+	ErrReadFile     = "ошибка при чтении файла"
+	ErrWriteFile    = "ошибка при записи файла"
 )
+
+type objects struct {
+	pathSrc    string
+	pathDst    string
+	isDir      bool
+	dirObjects []objects
+}
 
 func main() {
 	workDirs, err := getWorkDirs()
@@ -27,7 +33,15 @@ func main() {
 		return
 	}
 
-	err = copyDir(workDirs[0], workDirs[1])
+	objectsSrc := objects{pathSrc: workDirs[0], pathDst: workDirs[1], isDir: true, dirObjects: nil}
+
+	err = getObjectsFromDir(&objectsSrc)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	err = copyDir(objectsSrc)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -42,41 +56,54 @@ func getWorkDirs() (workDirs []string, err error) {
 		workDirs = append(workDirs, os.Args[1])
 		workDirs = append(workDirs, os.Args[2])
 	}
+
 	return
 }
 
-func copyDir(source string, dest string) (err error) {
-	info, err := os.Stat(source)
-    if err != nil || !info.IsDir() {
-        return errors.New(ErrNotADirectory)
-    }
-
-	err = os.MkdirAll(dest, 0755)
+func getObjectsFromDir(objectsSrc *objects) (err error) {
+	entries, err := os.ReadDir(objectsSrc.pathSrc)
 	if err != nil {
-		return errors.New(ErrCreateDir)
-	}
-
-	entries, err := os.ReadDir(source)
-	if err != nil {
-		return errors.New(ErrReadDir)
+		err = errors.New(ErrReadDir)
+		return
 	}
 
 	for _, entry := range entries {
-        srcPath := source + "/" + entry.Name()
-        dstPath := dest + "/" + entry.Name()
+		inner := objects{
+			pathSrc: objectsSrc.pathSrc + "/" + entry.Name(),
+			pathDst: objectsSrc.pathDst + "/" + entry.Name(),
+			isDir:   entry.IsDir(),
+		}
 
-        if entry.IsDir() {
-            err := copyDir(srcPath, dstPath)
+		if entry.IsDir() {
+			err = getObjectsFromDir(&inner)
 			if err != nil {
-                return err
-            }
-        } else {
-			err := copyFiles(srcPath, dstPath)
-			if err != nil {
-				return err
+				return
 			}
-        }
-    }
+		}
+
+		objectsSrc.dirObjects = append(objectsSrc.dirObjects, inner)
+	}
+
+	return
+}
+
+func copyDir(objectsSrc objects) (err error) {
+	for _, value := range objectsSrc.dirObjects {
+		if value.isDir {
+			err = os.MkdirAll(value.pathDst, 0755)
+			if err != nil {
+				err = errors.New(ErrCreateDir)
+				return
+			}
+			copyDir(value)
+		} else {
+			err = copyFiles(value.pathSrc, value.pathDst)
+			if err != nil {
+				return
+			}
+		}
+	}
+
 	return
 }
 
