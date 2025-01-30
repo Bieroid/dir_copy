@@ -33,9 +33,9 @@ func main() {
 		return
 	}
 
-	objectsSrc := objects{pathSrc: workDirs[0], pathDst: workDirs[1], isDir: true, dirObjects: nil}
+	objectsSrc := objects{pathSrc: workDirs[0], pathDst: workDirs[1], isDir: true}
 
-	err = getObjectsFromDir(&objectsSrc)
+	err = fillObjectTree(&objectsSrc)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -60,7 +60,7 @@ func getWorkDirs() (workDirs []string, err error) {
 	return
 }
 
-func getObjectsFromDir(objectsSrc *objects) (err error) {
+func fillObjectTree(objectsSrc *objects) (err error) {
 	entries, err := os.ReadDir(objectsSrc.pathSrc)
 	if err != nil {
 		err = errors.New(ErrReadDir)
@@ -75,7 +75,7 @@ func getObjectsFromDir(objectsSrc *objects) (err error) {
 		}
 
 		if entry.IsDir() {
-			err = getObjectsFromDir(&inner)
+			err = fillObjectTree(&inner)
 			if err != nil {
 				return
 			}
